@@ -1,0 +1,4 @@
+performances/*
+!performances/template.yaml
+node_modules
+.env
