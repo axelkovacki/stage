@@ -12,24 +12,24 @@ function getSubdomain(host: string | undefined) {
   return matches[0];
 }
 
-function getPerformancesPath(target: string): string {
-  return `${process.cwd()}/bucket/${target}.yaml`;
+function getComposePath(target: string): string {
+  return `${process.cwd()}/compose/${target}.yaml`;
 }
 
 function getYaml(target: string): any {
-  const stream = fs.readFileSync(getPerformancesPath(target), 'utf8');
+  const stream = fs.readFileSync(getComposePath(target), 'utf8');
   return yaml.parse(stream);
 }
 
 function setYaml(target: string, payload: any): void {
   const stream = yaml.stringify(payload);
-  fs.writeFileSync(getPerformancesPath(target), stream, 'utf8');
+  fs.writeFileSync(getComposePath(target), stream, 'utf8');
 }
 
 async function getDockerContext(target: string, pull: boolean = true) {
   console.log(`> Initialize docker daemon by: ${target}`);
   const docker = new Dockerode();
-  const compose = new DockerodeCompose(docker, getPerformancesPath(target), target);
+  const compose = new DockerodeCompose(docker, getComposePath(target), target);
 
   if (pull) {
     await compose.pull();
@@ -38,10 +38,19 @@ async function getDockerContext(target: string, pull: boolean = true) {
   return await compose.up();
 }
 
-function getImutableServices(): String[] {
+function getImutableServicesNames(): String[] {
   try {
-    let payload = JSON.parse(process.env.IMUTABLE_SERVICES);
+    let payload = JSON.parse(process.env.IMUTABLE_SERVICES_NAMES);
+    return payload;
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+}
 
+function getImutableServicesImages(): String[] {
+  try {
+    let payload = JSON.parse(process.env.IMUTABLE_SERVICES_IMAGES);
     return payload;
   } catch (err) {
     console.log(err);
@@ -54,5 +63,6 @@ export {
   getYaml,
   setYaml,
   getDockerContext,
-  getImutableServices
+  getImutableServicesNames,
+  getImutableServicesImages
 };

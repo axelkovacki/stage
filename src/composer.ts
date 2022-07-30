@@ -1,7 +1,11 @@
-import { getYaml, setYaml, getDockerContext, getImutableServices } from './utils';
+import { getYaml, setYaml, getDockerContext, getImutableServicesNames, getImutableServicesImages } from './utils';
 
-function notEnableToRename(key: string): boolean {
-  return getImutableServices().includes(key);
+function existInImuatableServicesNames(key: string): boolean {
+  return getImutableServicesNames().includes(key);
+}
+
+function existInImutableServicesImages(key: string): boolean {
+  return getImutableServicesImages().includes(key);
 }
 
 function renameKey(target: string, key: string) {
@@ -9,23 +13,28 @@ function renameKey(target: string, key: string) {
 }
 
 function renameImage(target: string, image: string): string {
-  return image.indexOf(':') ? `${image.split(':')[0]}:${target}`: `${image}:${target}`;
+  return image.indexOf(':') ? `${image.split(':')[0]}:${target}` : `${image}:${target}`;
 }
 
 function renameIndexesOfTemplate(target: string, template: any) {
   let custom = template;
 
   for (const key in custom.services) {
-    if (notEnableToRename(key)) {
+    let { image } = custom.services[key];
+
+    if (existInImutableServicesImages(key)) {
       continue;
     }
-    
-    const newKey = renameKey(target, key);
-    const image = renameImage(target, custom.services[key].image);
+
+    let newKey = !existInImuatableServicesNames(key) ? renameKey(target, key) : key;
 
     custom.services[newKey] = {
       ...custom.services[key],
-      image
+      image: renameImage(target, image)
+    }
+
+    if (key === newKey) {
+      continue;
     }
 
     delete custom.services[key];
@@ -35,7 +44,7 @@ function renameIndexesOfTemplate(target: string, template: any) {
 }
 
 function createTemplete(target: string): void {
-  let template = getYaml('template');
+  let template = getYaml('docker-compose');
   template = renameIndexesOfTemplate(target, template);
   setYaml(target, template);
 }

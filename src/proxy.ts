@@ -6,9 +6,9 @@ import { getSubdomain } from './utils';
 async function middleware(req: Request, res: Response, next: any) {
   const targets: any = {};
   const subdomain = getSubdomain(req.get('host'));
-  
+
   if (!targets[subdomain]) {
-    // await composer.up(subdomain);
+    await composer.up(subdomain);
 
     targets[subdomain] = {
       status: 'UP'
@@ -19,10 +19,12 @@ async function middleware(req: Request, res: Response, next: any) {
 }
 
 function isFrontProxy(pathname: string, req: Request) {
+  console.log('isFrontProxy: ', pathname, req.headers);
   return req.get('Stage-Proxy-Target') !== 'back';
 }
 
 function isBackProxy(pathname: string, req: Request) {
+  console.log('isBackProxy: ', pathname, req.headers);
   return req.get('Stage-Proxy-Target') === 'back';
 }
 
